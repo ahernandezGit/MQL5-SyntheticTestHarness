@@ -21,7 +21,6 @@ This mirrors the native `OrderSend()` contract exactly. Additionally:
 
 1. **Named constants** (`SYNTH_ERR_PRICE_OFF`, `SYNTH_ERR_REQUOTE`, etc.) replace raw integer literals to make error-handling paths self-documenting.
 2. **A guard function** (`IsExecutionError()`) centralizes the "what counts as failure?" logic, preventing scattered `!= 0` comparisons.
-3. **The method name uses `Try` prefix** (`TryExecuteOrder`, not `ExecuteOrder`) to signal at the call site that failure is a normal, expected outcome — not an exceptional case.
 
 ## Consequences
 
@@ -31,8 +30,7 @@ This mirrors the native `OrderSend()` contract exactly. Additionally:
 - **Guard function** prevents the bug class where a developer compares against the wrong integer value.
 
 ### Negative
-- **Callers must always check the return value**. Unlike exceptions, nothing forces the caller to handle the error. This is mitigated by the `Try` prefix convention (signals fallibility) and by the test suite (which validates both success and failure paths).
-- **CQS violation**: `TryExecuteOrder()` both performs an action AND returns a result. This is unavoidable without exceptions. Splitting into separate `ExecuteOrder()` + `GetLastExecutionError()` would create a fragile two-step protocol where the caller can forget step 2.
+- **Callers must always check the return value**. Unlike exceptions, nothing forces the caller to handle the error. This is mitigated by the test suite (which validates both success and failure paths).
 
 ### Risk
 - If a future version of MQL5 adds exception support, this pattern should be reevaluated. The interface `IMarketEnvironment` would need a new version.

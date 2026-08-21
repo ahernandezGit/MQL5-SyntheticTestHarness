@@ -13,92 +13,7 @@
 #include <SyntheticTestHarness\CSyntheticEngine.mqh>
 #include <SyntheticTestHarness\CArrayProvider.mqh>
 #include <SyntheticTestHarness\CCanvasVisualizer.mqh>
-
-//+------------------------------------------------------------------+
-//| Assertion counters - global state scoped to this script.          |
-//+------------------------------------------------------------------+
-int g_tests_passed = 0;
-int g_tests_failed = 0;
-string g_report_text = "";
-const double EPSILON_PRICE = 0.00001;  // 1 point on a 5-digit broker
-
-//+------------------------------------------------------------------+
-//| Log: helper to print and update the chart comment                |
-//+------------------------------------------------------------------+
-void Log(const string msg)
-  {
-   if(msg != "")
-      Print(msg);
-   g_report_text += msg + "\n";
-   Comment(g_report_text);
-  }
-
-//+------------------------------------------------------------------+
-//| AssertTrue: self-validating assertion (FIRST principle).          |
-//| Prints [PASS] or [FAIL] with the test name and increments the     |
-//| appropriate counter. No manual inspection required.               |
-//+------------------------------------------------------------------+
-void AssertTrue(const string test_name, const bool condition)
-  {
-   if(condition)
-     {
-      g_tests_passed++;
-      PrintFormat("  [PASS] %s", test_name);
-     }
-   else
-     {
-      g_tests_failed++;
-      PrintFormat("  [FAIL] %s", test_name);
-     }
-  }
-
-//+------------------------------------------------------------------+
-//| AssertFalse: inverted assertion for negative test cases.          |
-//+------------------------------------------------------------------+
-void AssertFalse(const string test_name, const bool condition)
-  {
-   AssertTrue(test_name, !condition);
-  }
-
-//+------------------------------------------------------------------+
-//| AssertEqual: floating-point equality with epsilon tolerance.      |
-//| Uses EPSILON_PRICE to avoid IEEE 754 rounding false negatives.    |
-//+------------------------------------------------------------------+
-void AssertEqual(const string test_name,
-                 const double expected,
-                 const double actual)
-  {
-   bool match = MathAbs(expected - actual) < EPSILON_PRICE;
-   if(!match)
-      Log(StringFormat("    Expected=%.5f  Actual=%.5f", expected, actual));
-   AssertTrue(test_name, match);
-  }
-
-//+------------------------------------------------------------------+
-//| AssertIntEqual: integer equality assertion.                       |
-//+------------------------------------------------------------------+
-void AssertIntEqual(const string test_name,
-                    const int expected,
-                    const int actual)
-  {
-   bool match = (expected == actual);
-   if(!match)
-      Log(StringFormat("    Expected=%d  Actual=%d", expected, actual));
-   AssertTrue(test_name, match);
-  }
-
-//+------------------------------------------------------------------+
-//| AssertUintEqual: unsigned integer equality (for retcode checks).  |
-//+------------------------------------------------------------------+
-void AssertUintEqual(const string test_name,
-                     const uint expected,
-                     const uint actual)
-  {
-   bool match = (expected == actual);
-   if(!match)
-      Log(StringFormat("    Expected=%u  Actual=%u", expected, actual));
-   AssertTrue(test_name, match);
-  }
+#include <SyntheticTestHarness\CAssert.mqh>
 
 //+------------------------------------------------------------------+
 //| BuildTestBuyRequest: helper to create a minimal BUY order.        |
@@ -212,7 +127,7 @@ void TestSpreadSpikeDetected()
   }
 
 //+------------------------------------------------------------------+
-//| TEST 3: TryExecuteOrder fails with injected error code.          |
+//| TEST 3: OrderSend fails with injected error code.          |
 //| Verifies: error injection path in CSyntheticEngine.              |
 //+------------------------------------------------------------------+
 void TestOrderFailsOnInjectedError()
@@ -234,7 +149,7 @@ void TestOrderFailsOnInjectedError()
    MqlTradeResult  result;
    BuildTestBuyRequest(request, 0.01);
 
-   bool success = engine.TryExecuteOrder(request, result);
+   bool success = engine.OrderSend(request, result);
 
    AssertFalse("Order execution fails on spike tick", success);
    AssertUintEqual("Retcode is TRADE_RETCODE_PRICE_OFF",
@@ -242,7 +157,7 @@ void TestOrderFailsOnInjectedError()
   }
 
 //+------------------------------------------------------------------+
-//| TEST 4: TryExecuteOrder succeeds on normal ticks.                |
+//| TEST 4: OrderSend succeeds on normal ticks.                |
 //| Verifies: happy path through CSyntheticEngine.                   |
 //+------------------------------------------------------------------+
 void TestOrderSucceedsOnNormalTick()
@@ -262,7 +177,7 @@ void TestOrderSucceedsOnNormalTick()
    MqlTradeResult  result;
    BuildTestBuyRequest(request, 0.01);
 
-   bool success = engine.TryExecuteOrder(request, result);
+   bool success = engine.OrderSend(request, result);
 
    AssertTrue("Order execution succeeds on normal tick", success);
    AssertUintEqual("Retcode is TRADE_RETCODE_DONE",
@@ -298,7 +213,7 @@ void TestMarketRecoveryAfterSpike()
    MqlTradeResult  result;
    BuildTestBuyRequest(request, 0.01);
 
-   bool success = engine.TryExecuteOrder(request, result);
+   bool success = engine.OrderSend(request, result);
 
    AssertTrue("Order succeeds after full recovery", success);
    AssertUintEqual("Retcode is TRADE_RETCODE_DONE after recovery",
@@ -306,7 +221,7 @@ void TestMarketRecoveryAfterSpike()
   }
 
 //+------------------------------------------------------------------+
-//| TEST 6: TryExecuteOrder fails before any tick is loaded.         |
+//| TEST 6: OrderSend fails before any tick is loaded.         |
 //| Verifies: guard clause for uninitialized engine state.           |
 //+------------------------------------------------------------------+
 void TestOrderFailsBeforeFirstTick()
@@ -324,7 +239,7 @@ void TestOrderFailsBeforeFirstTick()
    MqlTradeResult  result;
    BuildTestBuyRequest(request, 0.01);
 
-   bool success = engine.TryExecuteOrder(request, result);
+   bool success = engine.OrderSend(request, result);
 
    AssertFalse("Order fails when no tick is loaded", success);
    AssertTrue("Retcode is not TRADE_RETCODE_DONE before first tick",
@@ -376,6 +291,8 @@ void TestProviderResetReplaysTicks()
 //+------------------------------------------------------------------+
 void OnStart()
   {
+   CAssert::Reset();
+
    Log("==========================================================");
    Log("  SYNTHETIC TEST HARNESS - Spread Spike Scenario");
    Log("  Institutional Architecture in MQL5 - Part 1");
@@ -398,31 +315,7 @@ void OnStart()
    TestProviderResetReplaysTicks();
 
    //--- Summary (FIRST: Self-validating)
-   Log("");
-   Log("==========================================================");
-   
-   string summary = StringFormat("  RESULTS: %d passed, %d failed, %d total",
-                                 g_tests_passed, g_tests_failed,
-                                 g_tests_passed + g_tests_failed);
-   Log(summary);
-
-   string status;
-   uint icon;
-   if(g_tests_failed == 0)
-     {
-      status = "  STATUS: ALL TESTS PASSED";
-      icon = MB_ICONINFORMATION;
-     }
-   else
-     {
-      status = "  STATUS: SOME TESTS FAILED";
-      icon = MB_ICONERROR;
-     }
-   Log(status);
-   Log("==========================================================");
-
-   // Show MessageBox
-   MessageBox(summary + "\n\n" + status, "Test Results", icon | MB_OK);
+   CAssert::Summary("Spread Spike Test Results", true);
    
    //--- Visual overlay: render the scenario candles on the chart
    MockTick visual_ticks[];

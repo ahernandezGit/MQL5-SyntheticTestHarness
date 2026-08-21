@@ -9,17 +9,16 @@
 #include "IMarketEnvironment.mqh"
 
 //+------------------------------------------------------------------+
-//| CLiveEnvironment: production adapter for the real MT5 terminal.   |
+//| CLiveEnvironment: Production Adapter for the Live MT5 Terminal.   |
 //|                                                                   |
-//| Every method delegates directly to native MT5 global functions.   |
-//| This is the "other side" of the Dependency Injection coin:        |
-//|   - In tests:  your EA receives a CSyntheticEngine*               |
-//|   - In prod:   your EA receives a CLiveEnvironment*               |
-//|   - Your EA code stays the same in both cases.                    |
+//| Bridges IMarketEnvironment to native MT5 API functions.           |
+//| Uses the global scope resolution operator (`::`) to eliminate any |
+//| ambiguous calls or recursive collisions with interface methods.   |
 //|                                                                   |
-//| Usage:                                                            |
-//|   CLiveEnvironment *env = new CLiveEnvironment("EURUSD");         |
-//|   my_ea.Initialize(env);                                          |
+//| Dependency Injection:                                             |
+//|   - In Tests:      Trading engine receives CSyntheticEngine*      |
+//|   - In Production: Trading engine receives CLiveEnvironment*      |
+//|   - Business logic remains 100% agnostic to execution context.   |
 //+------------------------------------------------------------------+
 class CLiveEnvironment : public IMarketEnvironment
   {
@@ -28,57 +27,56 @@ private:
 
 public:
    //+---------------------------------------------------------------+
-   //| Constructor: receives the symbol to query from the terminal.   |
+   //| Constructor: sets the active symbol for price polling.        |
    //+---------------------------------------------------------------+
-    CLiveEnvironment(const string symbol)
+   CLiveEnvironment(const string symbol)
      {
       m_symbol = symbol;
      }
 
    //+---------------------------------------------------------------+
-   //| GetBid: delegates to SymbolInfoDouble(SYMBOL_BID).            |
+   //| Price queries: delegated to native MT5 global functions.      |
    //+---------------------------------------------------------------+
    double GetBid(void)
      {
-      return(SymbolInfoDouble(m_symbol, SYMBOL_BID));
+      return(::SymbolInfoDouble(m_symbol, SYMBOL_BID));
      }
 
-   //+---------------------------------------------------------------+
-   //| GetAsk: delegates to SymbolInfoDouble(SYMBOL_ASK).            |
-   //+---------------------------------------------------------------+
    double GetAsk(void)
      {
-      return(SymbolInfoDouble(m_symbol, SYMBOL_ASK));
+      return(::SymbolInfoDouble(m_symbol, SYMBOL_ASK));
      }
 
-   //+---------------------------------------------------------------+
-   //| GetSpread: delegates to SymbolInfoInteger(SYMBOL_SPREAD).     |
-   //| Returns spread in points as a double for interface compat.    |
-   //+---------------------------------------------------------------+
    double GetSpread(void)
      {
-      return((double)SymbolInfoInteger(m_symbol, SYMBOL_SPREAD));
+      return((double)::SymbolInfoInteger(m_symbol, SYMBOL_SPREAD));
      }
 
    //+---------------------------------------------------------------+
-   //| GetTimeCurrent: delegates to the native TimeCurrent().        |
+   //| Time abstraction: delegated to native TimeCurrent().          |
    //+---------------------------------------------------------------+
    datetime GetTimeCurrent(void)
      {
-      return(TimeCurrent());
+      return(::TimeCurrent());
      }
 
    //+---------------------------------------------------------------+
-   //| TryExecuteOrder: delegates directly to the native OrderSend().|
-   //| The request and result structures are passed through unchanged |
-   //| — this adapter adds zero logic, just bridges the interface     |
-   //| to the real terminal.                                          |
+   //| OrderSend: delegates to native ::OrderSend().                 |
+   //| Global scope operator `::` prevents recursion into method.    |
    //+---------------------------------------------------------------+
-   bool TryExecuteOrder(MqlTradeRequest &request, MqlTradeResult &result)
+   bool OrderSend(MqlTradeRequest &request, MqlTradeResult &result)
      {
-      return(OrderSend(request, result));
+      return(::OrderSend(request, result));
+     }
+
+   //+---------------------------------------------------------------+
+   //| MarketBookGet: delegates to native ::MarketBookGet().         |
+   //+---------------------------------------------------------------+
+   bool MarketBookGet(const string symbol, MqlBookInfo &book[])
+     {
+      return(::MarketBookGet(symbol, book));
      }
   };
 
-//+------------------------------------------------------------------+
 #endif
+//+------------------------------------------------------------------+

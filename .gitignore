@@ -1,5 +1,10 @@
 *.ex5
 *.png
+*.log
+compile_scripts.ps1
+compile*.ps1
+MQL5/Include/Canvas/
+MQL5/Include/Files/
 Assets/
 Documentation/article_structure.md
 Documentation/style.md
