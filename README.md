@@ -35,6 +35,7 @@ MQL5/
 │       ├── ITickProvider.mqh        # Interface for streaming and replaying ticks
 │       ├── CLiveEnvironment.mqh     # Production implementation wrapping native MQL5 calls
 │       ├── CSyntheticEngine.mqh     # Dual-mode synthetic mock (tick simulation + behavior injection)
+│       ├── MockPositionStore.mqh    # In-memory mock store for open positions and trade deal history
 │       ├── BehaviorDelegates.mqh    # Function pointer delegates for dynamic behavior injection
 │       ├── BehaviorLibrary.mqh      # Pre-built chaos engineering behaviors (requotes, disconnects)
 │       ├── CArrayProvider.mqh       # In-memory tick provider for deterministic test vectors
@@ -83,13 +84,13 @@ Copy the `MQL5/` directory directly into your MetaTrader 5 Data Folder:
 
 ---
 
-## Changelog (Since Article Publication)
+## Changelog (Since Article Version)
 
-All notable changes and enhancements introduced after the baseline publication (`article-version`) will be documented here.
-
-### [Unreleased]
+All notable changes and enhancements introduced after the baseline publication (`article-version`) will be documented here
 
 #### Added
+- **Mock Position & Deal History Store (`MockPositionStore.mqh`)**: In-memory state storage (`SMockPosition`, `SMockDeal`, `CMockPositionStore`) enabling deterministic testing of position lifecycles, exposure tracking, and daily PnL history without an active broker connection.
+- **Terminal State Bridge (`IMarketEnvironment.mqh`)**: Extended interface with generic bridge methods matching native MT5 signatures for Account (`AccountInfo*`), Symbol (`SymbolInfo*`), Open Positions (`Position*`), and Deal History (`History*`).
 - **Reusable Assertion Framework (`CAssert.mqh`)**: Centralized self-validating assertions (`AssertTrue`, `AssertFalse`, `AssertEqual`, `AssertIntEqual`, `AssertUintEqual`, etc.) and automated test suite reporting (`CAssert::Summary`).
 - **Behavior Injection (`BehaviorDelegates.mqh`)**: Typedef function pointer delegates enabling dynamic, runtime behavior mocking without mock frameworks.
 - **Chaos Behavior Library (`BehaviorLibrary.mqh`)**: Stateful and fault-injection mock implementations including `Behavior_RequoteTwice` and `Behavior_FatalDisconnect`.
@@ -98,6 +99,7 @@ All notable changes and enhancements introduced after the baseline publication (
 - **Architecture Record (`ADR-003`)**: Documented the rationale for behavior injection via function pointers in MQL5.
 
 #### Changed
+- **`CSyntheticEngine` & `CLiveEnvironment`**: Implemented the full terminal state bridge, allowing synthetic engines to mock symbol specifications, balance, equity, and position stores seamlessly while live environments delegate directly to native MT5 calls.
 - **Test Scripts**: Refactored `TestSpreadSpike.mq5` and `TestBehaviorInjection.mq5` to eliminate code duplication by adopting `CAssert.mqh`.
 - **`IMarketEnvironment`**: Renamed `TryExecuteOrder` to `OrderSend` for 1:1 parity with the native MT5 terminal API.
 - **`CSyntheticEngine`**: Upgraded into a dual-mode engine supporting both tick-driven simulation and priority behavior injection.
