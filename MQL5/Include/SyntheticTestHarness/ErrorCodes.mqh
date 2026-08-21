@@ -8,10 +8,6 @@
 
 //+------------------------------------------------------------------+
 //| Named error constants for synthetic test scenarios.               |
-//|                                                                   |
-//| ADR-001: MQL5 has no exceptions (try/catch/throw). We use named   |
-//| constants instead of raw integers so error-handling paths are     |
-//| self-documenting and grep-searchable.                             |
 //+------------------------------------------------------------------+
 #define SYNTH_ERR_NONE           0      // No error - execution succeeded
 #define SYNTH_ERR_REQUOTE        10004  // TRADE_RETCODE_REQUOTE
@@ -21,8 +17,6 @@
 
 //+------------------------------------------------------------------+
 //| IsExecutionError: guard function replacing raw int comparisons.   |
-//| Callers use this instead of checking error codes against zero     |
-//| directly, centralizing the "what counts as failure" logic.        |
 //+------------------------------------------------------------------+
 bool IsExecutionError(const int error_code)
   {

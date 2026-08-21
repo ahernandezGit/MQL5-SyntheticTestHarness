@@ -26,6 +26,5 @@ struct MockTick
    int               injected_error;  // MQL5 trade server error code (0 = none)
   };
 
-
 //+------------------------------------------------------------------+
 #endif

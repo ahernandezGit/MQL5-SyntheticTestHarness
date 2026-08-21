@@ -14,11 +14,6 @@
 //|                                                                  |
 //| This module supplies pre-packaged behaviors for injecting faults |
 //| and edge cases into the trading environment.                     |
-//|                                                                  |
-//| Stateful simulations:                                            |
-//| Since MQL5 functions lack closures, stateful behaviors use local |
-//| static variables to preserve lifecycle context across repeated   |
-//| calls (e.g., counting retry attempts before achieving a fill).   |
 //+------------------------------------------------------------------+
 
 //+------------------------------------------------------------------+

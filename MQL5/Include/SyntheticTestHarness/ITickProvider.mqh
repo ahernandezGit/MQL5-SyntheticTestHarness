@@ -15,11 +15,6 @@
 //| this abstraction, never on a concrete data source. New sources    |
 //| (CSV file, network stream, random generator) extend the system    |
 //| by implementing this interface - no existing code changes.        |
-//|                                                                   |
-//| Concrete implementations:                                         |
-//|   - CArrayProvider   (in-memory array, for rapid prototyping)     |
-//|   - [Future] CFileProvider   (CSV/binary file)                    |
-//|   - [Future] CRandomProvider (Monte Carlo scenarios)              |
 //+------------------------------------------------------------------+
 interface ITickProvider
   {
@@ -30,7 +25,6 @@ interface ITickProvider
    //--- Returns false if no tick was available (exhausted).
    bool              GetNextTick(MockTick &out_tick);
   };
-
 
 //+------------------------------------------------------------------+
 #endif

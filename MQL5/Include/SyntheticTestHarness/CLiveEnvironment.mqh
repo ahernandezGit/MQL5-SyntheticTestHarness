@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //|                                            CLiveEnvironment.mqh   |
 //|                          Synthetic Test Harness for MetaTrader 5  |
-//|              Institutional Architecture in MQL5 - Part 1 Series   |
+//|              Institutional Architecture in MQL5 - Part 2 Series   |
 //+------------------------------------------------------------------+
 #ifndef SYNTHETIC_TEST_HARNESS_CLIVE_ENVIRONMENT_MQH
 #define SYNTHETIC_TEST_HARNESS_CLIVE_ENVIRONMENT_MQH
@@ -14,11 +14,6 @@
 //| Bridges IMarketEnvironment to native MT5 API functions.           |
 //| Uses the global scope resolution operator (`::`) to eliminate any |
 //| ambiguous calls or recursive collisions with interface methods.   |
-//|                                                                   |
-//| Dependency Injection:                                             |
-//|   - In Tests:      Trading engine receives CSyntheticEngine*      |
-//|   - In Production: Trading engine receives CLiveEnvironment*      |
-//|   - Business logic remains 100% agnostic to execution context.   |
 //+------------------------------------------------------------------+
 class CLiveEnvironment : public IMarketEnvironment
   {
@@ -27,15 +22,19 @@ private:
 
 public:
    //+---------------------------------------------------------------+
-   //| Constructor: sets the active symbol for price polling.        |
+   //| Constructor & Destructor                                      |
    //+---------------------------------------------------------------+
-   CLiveEnvironment(const string symbol)
+   CLiveEnvironment(const string symbol = "")
      {
-      m_symbol = symbol;
+      m_symbol = (symbol == "") ? _Symbol : symbol;
+     }
+
+   ~CLiveEnvironment(void)
+     {
      }
 
    //+---------------------------------------------------------------+
-   //| Price queries: delegated to native MT5 global functions.      |
+   //| Price queries                                                 |
    //+---------------------------------------------------------------+
    double GetBid(void)
      {
@@ -53,7 +52,7 @@ public:
      }
 
    //+---------------------------------------------------------------+
-   //| Time abstraction: delegated to native TimeCurrent().          |
+   //| Time abstraction                                              |
    //+---------------------------------------------------------------+
    datetime GetTimeCurrent(void)
      {
@@ -61,8 +60,7 @@ public:
      }
 
    //+---------------------------------------------------------------+
-   //| OrderSend: delegates to native ::OrderSend().                 |
-   //| Global scope operator `::` prevents recursion into method.    |
+   //| Order execution                                               |
    //+---------------------------------------------------------------+
    bool OrderSend(MqlTradeRequest &request, MqlTradeResult &result)
      {
@@ -70,11 +68,128 @@ public:
      }
 
    //+---------------------------------------------------------------+
-   //| MarketBookGet: delegates to native ::MarketBookGet().         |
+   //| Depth of Market (DOM)                                         |
    //+---------------------------------------------------------------+
    bool MarketBookGet(const string symbol, MqlBookInfo &book[])
      {
       return(::MarketBookGet(symbol, book));
+     }
+
+   //+---------------------------------------------------------------+
+   //| Generic Symbol Info Bridge                                    |
+   //+---------------------------------------------------------------+
+   double SymbolInfoDouble(const string symbol, const ENUM_SYMBOL_INFO_DOUBLE property)
+     {
+      return(::SymbolInfoDouble(symbol, property));
+     }
+
+   long SymbolInfoInteger(const string symbol, const ENUM_SYMBOL_INFO_INTEGER property)
+     {
+      return(::SymbolInfoInteger(symbol, property));
+     }
+
+   //+---------------------------------------------------------------+
+   //| Generic Account Info Bridge                                   |
+   //+---------------------------------------------------------------+
+   double AccountInfoDouble(const ENUM_ACCOUNT_INFO_DOUBLE property)
+     {
+      return(::AccountInfoDouble(property));
+     }
+
+   long AccountInfoInteger(const ENUM_ACCOUNT_INFO_INTEGER property)
+     {
+      return(::AccountInfoInteger(property));
+     }
+
+   //+---------------------------------------------------------------+
+   //| Margin Calculation Bridge                                     |
+   //+---------------------------------------------------------------+
+   bool OrderCalcMargin(const ENUM_ORDER_TYPE action,
+                        const string symbol,
+                        const double volume,
+                        const double price,
+                        double &margin)
+     {
+      return(::OrderCalcMargin(action, symbol, volume, price, margin));
+     }
+
+   //+---------------------------------------------------------------+
+   //| Position Tracking Bridge                                      |
+   //+---------------------------------------------------------------+
+   int PositionsTotal(void)
+     {
+      return(::PositionsTotal());
+     }
+
+   string PositionGetSymbol(const int index)
+     {
+      return(::PositionGetSymbol(index));
+     }
+
+   long PositionGetInteger(const ENUM_POSITION_PROPERTY_INTEGER property)
+     {
+      return(::PositionGetInteger(property));
+     }
+
+   double PositionGetDouble(const ENUM_POSITION_PROPERTY_DOUBLE property)
+     {
+      return(::PositionGetDouble(property));
+     }
+
+   //+---------------------------------------------------------------+
+   //| Pending Order Tracking Bridge                                 |
+   //+---------------------------------------------------------------+
+   int OrdersTotal(void)
+     {
+      return(::OrdersTotal());
+     }
+
+   ulong OrderGetTicket(const int index)
+     {
+      return(::OrderGetTicket(index));
+     }
+
+   long OrderGetInteger(const ulong ticket, const ENUM_ORDER_PROPERTY_INTEGER property)
+     {
+      return(::OrderGetInteger(property));
+     }
+
+   string OrderGetString(const ulong ticket, const ENUM_ORDER_PROPERTY_STRING property)
+     {
+      return(::OrderGetString(property));
+     }
+
+   //+---------------------------------------------------------------+
+   //| Deal History Bridge                                           |
+   //+---------------------------------------------------------------+
+   bool HistorySelect(const datetime from_date, const datetime to_date)
+     {
+      return(::HistorySelect(from_date, to_date));
+     }
+
+   int HistoryDealsTotal(void)
+     {
+      return(::HistoryDealsTotal());
+     }
+
+   ulong HistoryDealGetTicket(const int index)
+     {
+      return(::HistoryDealGetTicket(index));
+     }
+
+   long HistoryDealGetInteger(const ulong ticket, const ENUM_DEAL_PROPERTY_INTEGER property)
+     {
+      return(::HistoryDealGetInteger(ticket, property));
+     }
+
+   double HistoryDealGetDouble(const ulong ticket, const ENUM_DEAL_PROPERTY_DOUBLE property)
+     {
+      return(::HistoryDealGetDouble(ticket, property));
+     }
+
+   string HistoryDealGetString(const ulong ticket, const ENUM_DEAL_PROPERTY_STRING property)
+     {
+      return(::HistoryDealGetString(ticket, property));
      }
   };
 

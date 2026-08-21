@@ -16,11 +16,6 @@
 //| Because MQL5 does not provide native closure/lambda support or   |
 //| dynamic mocking frameworks (like GoogleMock), we achieve dynamic |
 //| behavior injection via C-style function pointers (`typedef`).    |
-//|                                                                  |
-//| These delegates define the exact signatures expected by          |
-//| IMarketEnvironment methods, allowing tests to inject custom,     |
-//| stateful execution behaviors at runtime without modifying the   |
-//| test harness or domain trading engine.                           |
 //+------------------------------------------------------------------+
 
 //--- Delegate for OrderSend execution behavior
@@ -36,6 +31,9 @@ typedef datetime (*TGetTimeCurrentBehavior)(void);
 
 //--- Delegate for Depth of Market (DOM) / Order Book retrieval
 typedef bool (*TMarketBookGetBehavior)(const string symbol, MqlBookInfo &book[]);
+
+//--- Delegate for Slippage Prediction / Thermodynamic LOB Energy Model (Part 3 Hook)
+typedef double (*TSlippagePredictor)(const string symbol, const double volume, const MqlBookInfo &book[]);
 
 #endif
 //+------------------------------------------------------------------+
