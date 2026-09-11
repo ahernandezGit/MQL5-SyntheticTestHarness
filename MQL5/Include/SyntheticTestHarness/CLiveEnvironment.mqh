@@ -151,12 +151,26 @@ public:
 
    long OrderGetInteger(const ulong ticket, const ENUM_ORDER_PROPERTY_INTEGER property)
      {
-      return(::OrderGetInteger(property));
+      int total = ::OrdersTotal();
+      for(int i = 0; i < total; i++)
+        {
+         ulong t = ::OrderGetTicket(i);
+         if(t == ticket)
+            return(::OrderGetInteger(property));
+        }
+      return(0);
      }
 
    string OrderGetString(const ulong ticket, const ENUM_ORDER_PROPERTY_STRING property)
      {
-      return(::OrderGetString(property));
+      int total = ::OrdersTotal();
+      for(int i = 0; i < total; i++)
+        {
+         ulong t = ::OrderGetTicket(i);
+         if(t == ticket)
+            return(::OrderGetString(property));
+        }
+      return("");
      }
 
    //+---------------------------------------------------------------+
