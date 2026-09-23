@@ -395,7 +395,7 @@ void CMockBookBuilder::BuildLiquidityVacuum(const double mid_price,
      {
       bool in_vacuum = (i >= vac_start && i < vac_start + vacuum_width_levels);
       double v;
-      if(i == 0)
+      if(i < vac_start)
          v = surface_volume;
       else if(in_vacuum)
          v = surface_volume * 0.05;
