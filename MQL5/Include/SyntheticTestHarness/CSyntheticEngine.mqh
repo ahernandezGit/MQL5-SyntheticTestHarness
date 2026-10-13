@@ -46,6 +46,7 @@ private:
    double                      m_mock_equity;
    double                      m_mock_margin_free;
    long                        m_mock_leverage;
+   long                        m_mock_login;
 
    //--- Configurable Mock Symbol Properties
    double                      m_mock_point;
@@ -73,6 +74,7 @@ public:
       m_mock_equity             = 100000.0;
       m_mock_margin_free        = 100000.0;
       m_mock_leverage           = 100;
+      m_mock_login              = 12345678;
 
       // Default Symbol Mocking (Standard EURUSD-like profile)
       m_mock_point              = 0.00001;
@@ -134,6 +136,7 @@ public:
    void SetMockEquity(const double e)               { m_mock_equity = e; }
    void SetMockMarginFree(const double m)           { m_mock_margin_free = m; }
    void SetMockLeverage(const long l)               { m_mock_leverage = l; }
+   void SetMockLogin(const long l)                  { m_mock_login = l; }
    void SetMockPoint(const double p)                { m_mock_point = p; }
    void SetMockTickValue(const double tv)           { m_mock_tick_value = tv; }
    void SetMockTickSize(const double ts)            { m_mock_tick_size = ts; }
@@ -288,6 +291,7 @@ public:
       switch(property)
         {
          case ACCOUNT_LEVERAGE:    return(m_mock_leverage);
+         case ACCOUNT_LOGIN:       return(m_mock_login);
          default:                  return(0);
         }
      }
