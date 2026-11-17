@@ -1,8 +1,16 @@
 # MQL5 Synthetic Test Harness
 
+[![MQL5](https://img.shields.io/badge/Language-MQL5-blue.svg)](https://www.mql5.com)
+[![Platform](https://img.shields.io/badge/Platform-MetaTrader%205-orange.svg)](https://www.metatrader5.com)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-MQL5--SyntheticTestHarness-181717?logo=github)](https://github.com/ahernandezGit/MQL5-SyntheticTestHarness)
+[![Algo Forge](https://img.shields.io/badge/MQL5%20Algo%20Forge-MQL5--SyntheticTestHarness-0078D4)](https://forge.mql5.io/adhernandezm/MQL5-SyntheticTestHarness)
+
 A lightweight, deterministic synthetic testing and mocking engine for MetaTrader 5 (MQL5) using Dependency Injection (DI), Mocking, and Event-Driven Architecture.
 
 > **Part 1 of the Institutional Architecture for MQL5 Series.**
+>
+> **Official Mirrors:** [GitHub](https://github.com/ahernandezGit/MQL5-SyntheticTestHarness) · [MQL5 Algo Forge](https://forge.mql5.io/adhernandezm/MQL5-SyntheticTestHarness)
 
 ---
 
@@ -28,25 +36,32 @@ Backtesting and live forward-testing alone cannot reliably test edge cases such 
 ## Architecture & Components
 
 ```
-MQL5/
-├── Include/
-│   └── SyntheticTestHarness/
-│       ├── IMarketEnvironment.mqh   # Market data & terminal state abstraction interface
-│       ├── ITickProvider.mqh        # Interface for streaming and replaying ticks
-│       ├── CLiveEnvironment.mqh     # Production implementation wrapping native MQL5 calls
-│       ├── CSyntheticEngine.mqh     # Dual-mode synthetic mock (tick simulation + behavior injection)
-│       ├── MockPositionStore.mqh    # In-memory mock store for open positions and trade deal history
-│       ├── BehaviorDelegates.mqh    # Function pointer delegates for dynamic behavior injection
-│       ├── BehaviorLibrary.mqh      # Pre-built chaos engineering behaviors (requotes, disconnects)
-│       ├── CArrayProvider.mqh       # In-memory tick provider for deterministic test vectors
-│       ├── MockTick.mqh             # Synthetic tick builder & data structures
-│       ├── CCanvasVisualizer.mqh    # On-chart HUD / graphical assertion dashboard
-│       ├── CAssert.mqh              # Centralized, reusable assertion framework & test reporter
-│       └── ErrorCodes.mqh           # Harness-specific status and error definitions
-└── Scripts/
-    └── SyntheticTestHarness/
-        ├── TestSpreadSpike.mq5      # Executable scenario demonstrating spread spike tests
-        └── TestBehaviorInjection.mq5 # TDD runner demonstrating behavior injection and hot-swapping
+├── Documentation/
+│   └── decisions/
+│       ├── ADR-001-error-codes-over-exceptions.md              # Return codes & explicit error handling
+│       ├── ADR-002-interface-di-over-preprocessor-mocking.md   # Interface DI over #ifdef mocking
+│       └── ADR-003-behavior-injection-via-function-pointers.md # Runtime behavior injection via delegates
+└── MQL5/
+    ├── Include/
+    │   └── SyntheticTestHarness/
+    │       ├── IMarketEnvironment.mqh   # Market data & terminal state abstraction interface
+    │       ├── ITickProvider.mqh        # Interface for streaming and replaying ticks
+    │       ├── CLiveEnvironment.mqh     # Production implementation wrapping native MQL5 calls
+    │       ├── CSyntheticEngine.mqh     # Dual-mode synthetic mock (tick simulation + behavior injection)
+    │       ├── CMockBookBuilder.mqh     # Deterministic Level 2 DOM constructor & canonical order book scenarios
+    │       ├── MockPositionStore.mqh    # In-memory mock store for open positions and trade deal history
+    │       ├── MockEquityPeakStore.mqh  # Hermetic in-memory key-value store for equity high-water mark testing
+    │       ├── BehaviorDelegates.mqh    # Function pointer delegates for dynamic behavior injection
+    │       ├── BehaviorLibrary.mqh      # Pre-built chaos engineering behaviors (requotes, disconnects)
+    │       ├── CArrayProvider.mqh       # In-memory tick provider for deterministic test vectors
+    │       ├── MockTick.mqh             # Synthetic tick builder & data structures
+    │       ├── CCanvasVisualizer.mqh    # On-chart HUD / graphical assertion dashboard
+    │       ├── CAssert.mqh              # Centralized, reusable assertion framework & test reporter
+    │       └── ErrorCodes.mqh           # Harness-specific status and error definitions
+    └── Scripts/
+        └── SyntheticTestHarness/
+            ├── TestSpreadSpike.mq5      # Executable scenario demonstrating spread spike tests
+            └── TestBehaviorInjection.mq5 # TDD runner demonstrating behavior injection and hot-swapping
 ```
 
 ---
@@ -89,6 +104,9 @@ Copy the `MQL5/` directory directly into your MetaTrader 5 Data Folder:
 All notable changes and enhancements introduced after the baseline publication (`article-version`) will be documented here
 
 #### Added
+- **Mock Account Login Support (`CSyntheticEngine.mqh`)**: Added `SetMockLogin` and `ACCOUNT_LOGIN` support in `AccountInfoInteger`.
+- **Deterministic Level 2 DOM Builder (`CMockBookBuilder.mqh`)**: Builds reproducible `MqlBookInfo[]` snapshots for TDD without broker DOM subscriptions, with canonical microstructure scenarios (`BuildBalancedBook`, `BuildThinBook`, `BuildHollowBook`, `BuildWallOnBid`, `BuildWallOnAsk`, `BuildAsymmetricBook`, `BuildLiquidityVacuum`) and diagnostic helpers (`GetBestBid`, `GetBestAsk`, `SumVolumeSide`).
+- **Hermetic Equity Peak Store (`MockEquityPeakStore.mqh`)**: In-memory key-value store with function-pointer-compatible stubs (`MockEPCheck`, `MockEPGet`, `MockEPSet`) for isolated testing of equity high-water marks without polluting MT5 `GlobalVariable*` state.
 - **Mock Position & Deal History Store (`MockPositionStore.mqh`)**: In-memory state storage (`SMockPosition`, `SMockDeal`, `CMockPositionStore`) enabling deterministic testing of position lifecycles, exposure tracking, and daily PnL history without an active broker connection.
 - **Terminal State Bridge (`IMarketEnvironment.mqh`)**: Extended interface with generic bridge methods matching native MT5 signatures for Account (`AccountInfo*`), Symbol (`SymbolInfo*`), Open Positions (`Position*`), and Deal History (`History*`).
 - **Reusable Assertion Framework (`CAssert.mqh`)**: Centralized self-validating assertions (`AssertTrue`, `AssertFalse`, `AssertEqual`, `AssertIntEqual`, `AssertUintEqual`, etc.) and automated test suite reporting (`CAssert::Summary`).
@@ -105,6 +123,10 @@ All notable changes and enhancements introduced after the baseline publication (
 - **`CSyntheticEngine`**: Upgraded into a dual-mode engine supporting both tick-driven simulation and priority behavior injection.
 - **`CLiveEnvironment`**: Explicitly scoped all native MT5 API calls with the global scope resolution operator (`::`).
 - **`TestSpreadSpike.mq5`**: Updated invocation call sites to `OrderSend`.
+
+#### Fixed
+- **`CLiveEnvironment` Order Property Selection (`CLiveEnvironment.mqh`)**: `OrderGetInteger` and `OrderGetString` now select the target order ticket via an `OrdersTotal()` / `::OrderGetTicket(i)` loop prior to reading the property.
+- **Liquidity Vacuum Surface Indexing (`CMockBookBuilder.mqh`)**: Fixed surface level assignment (`i < vac_start`) in `BuildLiquidityVacuum`.
 
 <!--
 Format template for future entries:
